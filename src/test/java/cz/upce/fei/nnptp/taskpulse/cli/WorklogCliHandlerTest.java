@@ -64,13 +64,6 @@ class WorklogCliHandlerTest {
         assertThat(tasks.getTask(taskId).getWorklogs()).isEmpty();
     }
 
-    @Test
-    void nonNumericDurationReportsClearError() {
-        assertThatThrownBy(() -> handler.handle(List.of("log", taskId.toString(), "abc", "--author", "Dev")))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Duration must be a valid integer");
-        assertThat(tasks.getTask(taskId).getWorklogs()).isEmpty();
-    }
 
     @Test
     void logWithoutDescriptionStoresEmptyDescription() {

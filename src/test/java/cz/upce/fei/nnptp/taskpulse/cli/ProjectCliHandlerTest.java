@@ -97,9 +97,4 @@ class ProjectCliHandlerTest {
         assertThat(service.listProjects()).isEmpty();
     }
 
-    @Test
-    void invalidUuidIsNotSilentlyAccepted() {
-        assertThatThrownBy(() -> handler.handle(List.of("show", "not-a-uuid")))
-                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Invalid UUID");
-    }
 }

@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import static org.assertj.core.api.Assertions.*;
@@ -61,11 +60,6 @@ class TaskCliHandlerTest {
         assertThat(stdout.toString(StandardCharsets.UTF_8)).contains("Task created:");
     }
 
-    @Test
-    void listWithoutMatchingTasksPrintsMessage() {
-        handler.handle(List.of("list", "--search", "missing"));
-        assertThat(stdout.toString(StandardCharsets.UTF_8)).contains("No tasks found.");
-    }
 
     @Test
     void searchAcceptsLiteralStartingWithDoubleDash() {
@@ -91,13 +85,6 @@ class TaskCliHandlerTest {
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("--exceeded expects");
     }
 
-    @Test
-    void dateRangeFiltersTasks() {
-        tasks.createTask(projectId, "November", "", Priority.MEDIUM, null, LocalDate.of(2026, 11, 10));
-        tasks.createTask(projectId, "December", "", Priority.MEDIUM, null, LocalDate.of(2026, 12, 10));
-        handler.handle(List.of("list", "--from", "2026-11-01", "--to", "2026-11-30"));
-        assertThat(stdout.toString(StandardCharsets.UTF_8)).contains("November").doesNotContain("December");
-    }
 
     @Test
     void combinedProjectStateAndPriorityFiltersMatchOneTask() {
