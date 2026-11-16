@@ -74,6 +74,36 @@ class CsvStorageManagerTest {
     }
 
     @Test
+    void failedSaveShouldPreserveExistingCsvContent() throws IOException {
+        CsvStorageManager storage = new CsvStorageManager(tempDir);
+        InMemoryTaskRepository taskRepo = new InMemoryTaskRepository();
+
+        InMemoryProjectRepository originalRepo = new InMemoryProjectRepository();
+        originalRepo.save(new Project(UUID.randomUUID(), "Original", "Original data"));
+
+        storage.save(originalRepo, taskRepo);
+
+        Path projectsFile = tempDir.resolve("projects.csv");
+        byte[] originalContent = Files.readAllBytes(projectsFile);
+
+        InMemoryProjectRepository failingRepo = new InMemoryProjectRepository() {
+            @Override
+            public List<Project> findAll() {
+                return java.util.Arrays.asList(
+                    new Project(UUID.randomUUID(), "Updated", "New data"),
+                    null
+                );
+            }
+        };
+
+        assertThatThrownBy(() -> storage.save(failingRepo, taskRepo))
+            .isInstanceOf(NullPointerException.class);
+
+        assertThat(Files.readAllBytes(projectsFile))
+            .isEqualTo(originalContent);
+    }
+
+    @Test
     void loadFromNonExistentDirectoryInitializesEmptyWorkspace() {
         Path nonExistent = tempDir.resolve("does_not_exist");
         CsvStorageManager storage = new CsvStorageManager(nonExistent);
