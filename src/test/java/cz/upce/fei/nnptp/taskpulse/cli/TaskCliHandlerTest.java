@@ -13,6 +13,7 @@ import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.*;
 
 class TaskCliHandlerTest {
