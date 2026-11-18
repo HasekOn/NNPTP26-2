@@ -441,6 +441,23 @@ class TaskPulseCliTest {
     }
 
     @ParameterizedTest
+    @CsvSource({
+            "--priority, Missing value for option --priority",
+            "--from, Missing value for option --from",
+            "--to, Missing value for option --to",
+            "--prioirty HIGH, Unknown option: --prioirty",
+            "--prioirty=HIGH, Unknown option: --prioirty"
+    })
+    void taskListRejectsInvalidOptions(String options, String expectedError) {
+        taskWith45RecordedMinutes(30);
+
+        cli.executeLine("task list " + options);
+
+        assertThat(errContent.toString()).contains(expectedError);
+        assertThat(outContent.toString()).isEmpty();
+    }
+
+    @ParameterizedTest
     @CsvSource({"-1, non-negative", "later, whole number", "9223372036854775808, whole number"})
     void taskListRejectsInvalidVarianceThreshold(String input, String expectedError) {
         cli.executeLine("task list --exceeded " + input);
@@ -454,9 +471,7 @@ class TaskPulseCliTest {
             "--from 2999-01-01, Later;Soon",
             "--to 2999-01-31, Past;Soon",
             "--from 2999-01-01 --to 2999-01-31, Soon",
-            "--from 2999-01-10 --to 2999-01-10, Soon",
-            "--from, None;Past;Soon;Later",
-            "--to, None;Past;Soon;Later"
+            "--from 2999-01-10 --to 2999-01-10, Soon"
     })
     void taskListFiltersByDueDateRange(String options, String expectedTitles) {
         tasksWithDueDates();

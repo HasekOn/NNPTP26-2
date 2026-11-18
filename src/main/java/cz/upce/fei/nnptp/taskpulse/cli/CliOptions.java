@@ -28,6 +28,9 @@ final class CliOptions {
             if (!name.startsWith("--")) {
                 continue;
             }
+            if (!VALUE_OPTIONS.contains(name) && !FLAGS.contains(name)) {
+                throw new IllegalArgumentException("Unknown option: " + name);
+            }
 
             if (equalsIndex >= 0) {
                 if (VALUE_OPTIONS.contains(name)) {
@@ -40,8 +43,8 @@ final class CliOptions {
                 } else {
                     options.values.put(name, "");
                 }
-            } else if (VALUE_OPTIONS.contains(name) && i + 1 < args.size()) {
-                if (args.get(i + 1).startsWith("--")) {
+            } else if (VALUE_OPTIONS.contains(name)) {
+                if (i + 1 >= args.size() || args.get(i + 1).startsWith("--")) {
                     throw new IllegalArgumentException("Missing value for option " + name);
                 }
                 options.values.put(name, args.get(++i));
