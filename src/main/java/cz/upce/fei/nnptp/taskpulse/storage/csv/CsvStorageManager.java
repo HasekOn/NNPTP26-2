@@ -28,6 +28,8 @@ import java.util.function.Consumer;
  * this class is responsible for file I/O and for validating relationships between entities.
  */
 public class CsvStorageManager {
+    private static final String UTF8_BOM = "\uFEFF";
+
     private final Path dataDirectory;
     private final ProjectCsvMapper projectMapper = new ProjectCsvMapper();
     private final TaskCsvMapper taskMapper = new TaskCsvMapper();
@@ -102,6 +104,9 @@ public class CsvStorageManager {
         }
         try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             List<List<String>> rows = CsvUtils.parse(reader);
+            if (!rows.isEmpty()) {
+                validateHeader(mapper, rows.get(0));
+            }
             for (int i = 1; i < rows.size(); i++) {
                 List<String> row = rows.get(i);
                 if (isBlankRow(row)) {
@@ -112,6 +117,17 @@ public class CsvStorageManager {
             }
         } catch (Exception e) {
             throw new StorageException("Failed to load " + mapper.fileName() + ": " + e.getMessage(), e);
+        }
+    }
+
+    private static void validateHeader(CsvEntityMapper<?> mapper, List<String> header) {
+        List<String> actual = header.stream()
+                .map(column -> column.replace(UTF8_BOM, "").strip())
+                .toList();
+        if (!actual.equals(mapper.columns())) {
+            throw new StorageException("Unsupported header in " + mapper.fileName()
+                    + ": expected '" + String.join(",", mapper.columns())
+                    + "' but found '" + String.join(",", header) + "'");
         }
     }
 
