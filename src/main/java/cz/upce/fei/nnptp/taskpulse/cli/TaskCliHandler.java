@@ -28,7 +28,7 @@ final class TaskCliHandler implements CliCommandHandler {
     @Override
     public void handle(List<String> args) {
         if (args.isEmpty()) {
-            err.println("Usage: task <add|list|show|transition|label|delete> [arguments]");
+            err.println("Usage: task <add|update|list|show|transition|label|delete> [arguments]");
             return;
         }
 
@@ -44,6 +44,49 @@ final class TaskCliHandler implements CliCommandHandler {
                 String desc = args.size() > 3 ? args.get(3) : "";
                 Task task = taskService.createTask(projectId, title, desc, Priority.MEDIUM, null, null);
                 out.println("Task created: " + task.getId() + " - " + task.getTitle());
+            }
+            case "update" -> {
+                if (args.size() < 4) {
+                    err.println("Usage: task update <task-id> <--title|--description|--priority|--estimate|--due> <value> [...]");
+                    return;
+                }
+                UUID id = TaskPulseCli.parseUuid(args.get(1));
+                Task existing = taskService.getTask(id);
+                String title = existing.getTitle();
+                String description = existing.getDescription();
+                Priority priority = existing.getPriority();
+                Integer estimate = existing.getEstimatedMinutes();
+                LocalDate dueDate = existing.getDueDate();
+                for (int i = 2; i < args.size(); i += 2) {
+                    String option = args.get(i).toLowerCase(Locale.ROOT);
+                    if (!List.of("--title", "--description", "--priority", "--estimate", "--due").contains(option)) {
+                        throw new IllegalArgumentException("Unknown task update option: '" + args.get(i) + "'");
+                    }
+                    if (i + 1 >= args.size() || args.get(i + 1).startsWith("--")) {
+                        throw new IllegalArgumentException("Missing value for " + option);
+                    }
+                    String value = args.get(i + 1);
+                    switch (option) {
+                        case "--title" -> title = value;
+                        case "--description" -> description = value;
+                        case "--priority" -> priority = parsePriority(value);
+                        case "--estimate" -> {
+                            if (value.equalsIgnoreCase("none")) {
+                                estimate = null;
+                            } else {
+                                try {
+                                    estimate = Integer.valueOf(value);
+                                } catch (NumberFormatException e) {
+                                    throw new IllegalArgumentException("Invalid estimate: '" + value + "'. Expected whole minutes or none");
+                                }
+                            }
+                        }
+                        case "--due" -> dueDate = value.equalsIgnoreCase("none") ? null : parseDate(value);
+                        default -> throw new IllegalStateException("Unexpected option: " + option);
+                    }
+                }
+                Task updated = taskService.updateTask(id, title, description, priority, estimate, dueDate);
+                out.println("Task updated: " + updated.getId() + " - " + updated.getTitle());
             }
             case "list" -> {
                 CliOptions options = CliOptions.parse(args, 1);
