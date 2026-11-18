@@ -2,15 +2,19 @@ package cz.upce.fei.nnptp.taskpulse.cli;
 
 import cz.upce.fei.nnptp.taskpulse.domain.Priority;
 import cz.upce.fei.nnptp.taskpulse.domain.TaskState;
+import cz.upce.fei.nnptp.taskpulse.domain.exception.ValidationException;
 import cz.upce.fei.nnptp.taskpulse.service.ProjectService;
 import cz.upce.fei.nnptp.taskpulse.service.TaskService;
 import cz.upce.fei.nnptp.taskpulse.storage.InMemoryProjectRepository;
 import cz.upce.fei.nnptp.taskpulse.storage.InMemoryTaskRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -59,6 +63,57 @@ class TaskCliHandlerTest {
         assertThat(task.getDescription()).isEmpty();
         assertThat(task.getPriority()).isEqualTo(Priority.MEDIUM);
         assertThat(stdout.toString(StandardCharsets.UTF_8)).contains("Task created:");
+    }
+
+    @Test
+    void addAcceptsDescriptionPriorityEstimateAndDueDate() {
+        handler.handle(List.of("add", projectId.toString(), "Implement", "CSV escaping",
+                "--priority", "high", "--estimate", "90", "--due", "2026-12-01"));
+        var task = tasks.listTasks().get(0);
+        assertThat(task.getDescription()).isEqualTo("CSV escaping");
+        assertThat(task.getPriority()).isEqualTo(Priority.HIGH);
+        assertThat(task.getEstimatedMinutes()).isEqualTo(90);
+        assertThat(task.getDueDate()).isEqualTo(LocalDate.of(2026, 12, 1));
+    }
+
+    @Test
+    void addAcceptsOptionsWithoutDescription() {
+        handler.handle(List.of("add", projectId.toString(), "Implement", "--ESTIMATE", "0"));
+        var task = tasks.listTasks().get(0);
+        assertThat(task.getDescription()).isEmpty();
+        assertThat(task.getPriority()).isEqualTo(Priority.MEDIUM);
+        assertThat(task.getEstimatedMinutes()).isZero();
+        assertThat(task.getDueDate()).isNull();
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "--priority|URGENT|Invalid priority",
+            "--estimate|soon|Invalid estimate",
+            "--due|2026-02-30|Invalid date",
+            "--deadline|2026-12-01|Unknown task add option: '--deadline'",
+            "Description|extra|Unknown task add option: 'Description'"
+    })
+    void addRejectsInvalidOptionsWithoutCreatingTask(String option, String value, String message) {
+        assertThatThrownBy(() -> handler.handle(List.of("add", projectId.toString(), "Implement", "", option, value)))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining(message);
+        assertThat(tasks.listTasks()).isEmpty();
+    }
+
+    @Test
+    void addRejectsOptionWithoutValue() {
+        assertThatThrownBy(() -> handler.handle(List.of("add", projectId.toString(), "Implement", "--priority")))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Missing value for --priority");
+        assertThatThrownBy(() -> handler.handle(List.of("add", projectId.toString(), "Implement", "--due", "--priority", "LOW")))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Missing value for --due");
+        assertThat(tasks.listTasks()).isEmpty();
+    }
+
+    @Test
+    void addRejectsNegativeEstimateWithoutCreatingTask() {
+        assertThatThrownBy(() -> handler.handle(List.of("add", projectId.toString(), "Implement", "--estimate", "-5")))
+                .isInstanceOf(ValidationException.class).hasMessageContaining("cannot be negative");
+        assertThat(tasks.listTasks()).isEmpty();
     }
 
 

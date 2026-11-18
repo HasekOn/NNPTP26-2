@@ -292,6 +292,33 @@ class TaskPulseCliTest {
         assertThat(outContent.toString()).contains("transitioned to DONE");
     }
 
+    @Test
+    void taskAddSetsAttributesFromQuotedCommandLine() {
+        UUID projectId = projectService.createProject("Course", "").getId();
+
+        cli.executeLine("task add " + projectId + " \"Implement parser\" \"RFC 4180, quoted fields\""
+                + " --priority CRITICAL --estimate 120 --due 2026-12-01");
+
+        Task task = taskService.listTasks().get(0);
+        assertThat(task.getTitle()).isEqualTo("Implement parser");
+        assertThat(task.getDescription()).isEqualTo("RFC 4180, quoted fields");
+        assertThat(task.getPriority()).isEqualTo(Priority.CRITICAL);
+        assertThat(task.getEstimatedMinutes()).isEqualTo(120);
+        assertThat(task.getDueDate()).isEqualTo(LocalDate.of(2026, 12, 1));
+    }
+
+    @Test
+    void taskAddWithInvalidOptionReportsErrorAndCreatesNothing() {
+        UUID projectId = projectService.createProject("Course", "").getId();
+
+        cli.executeLine("task add " + projectId + " Parser --due tomorrow");
+
+        assertThat(errContent.toString(StandardCharsets.UTF_8))
+                .contains("Invalid argument: Invalid date: 'tomorrow'")
+                .doesNotContain("Exception");
+        assertThat(taskService.listTasks()).isEmpty();
+    }
+
     @ParameterizedTest
     @CsvSource({
             "--author --desc oprava, --author",

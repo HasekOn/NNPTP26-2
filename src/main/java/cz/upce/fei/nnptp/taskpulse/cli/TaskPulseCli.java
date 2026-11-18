@@ -106,7 +106,7 @@ public class TaskPulseCli {
         out.println("  project show <project-id>");
         out.println("  project edit <project-id> <name> [description]");
         out.println("  project delete <project-id>");
-        out.println("  task add <project-id> <title> [description]");
+        out.println("  task add <project-id> <title> [description] [--priority <priority>] [--estimate <minutes>] [--due <YYYY-MM-DD>]");
         out.println("  task list [--project <id>] [--state <state>] [--priority <priority>] [--label <label>]"
                 + " [--search <text>] [--overdue] [--exceeded [<minutes>]] [--sort <title|priority|duedate|priority-duedate>]"
                 + " [--from <YYYY-MM-DD>] [--to <YYYY-MM-DD>]");

@@ -36,13 +36,36 @@ final class TaskCliHandler implements CliCommandHandler {
         switch (action) {
             case "add" -> {
                 if (args.size() < 3) {
-                    err.println("Usage: task add <project-id> <title> [description]");
+                    err.println("Usage: task add <project-id> <title> [description] [--priority <priority>] [--estimate <minutes>] [--due <YYYY-MM-DD>]");
                     return;
                 }
                 UUID projectId = TaskPulseCli.parseUuid(args.get(1));
                 String title = args.get(2);
-                String desc = args.size() > 3 ? args.get(3) : "";
-                Task task = taskService.createTask(projectId, title, desc, Priority.MEDIUM, null, null);
+                int i = 3;
+                String desc = "";
+                if (i < args.size() && !args.get(i).startsWith("--")) {
+                    desc = args.get(i++);
+                }
+                Priority priority = Priority.MEDIUM;
+                Integer estimate = null;
+                LocalDate dueDate = null;
+                for (; i < args.size(); i += 2) {
+                    String option = args.get(i).toLowerCase(Locale.ROOT);
+                    if (!List.of("--priority", "--estimate", "--due").contains(option)) {
+                        throw new IllegalArgumentException("Unknown task add option: '" + args.get(i) + "'");
+                    }
+                    if (i + 1 >= args.size() || args.get(i + 1).startsWith("--")) {
+                        throw new IllegalArgumentException("Missing value for " + option);
+                    }
+                    String value = args.get(i + 1);
+                    switch (option) {
+                        case "--priority" -> priority = parsePriority(value);
+                        case "--estimate" -> estimate = parseEstimate(value);
+                        case "--due" -> dueDate = parseDate(value);
+                        default -> throw new IllegalStateException("Unexpected option: " + option);
+                    }
+                }
+                Task task = taskService.createTask(projectId, title, desc, priority, estimate, dueDate);
                 out.println("Task created: " + task.getId() + " - " + task.getTitle());
             }
             case "update" -> {
@@ -70,17 +93,7 @@ final class TaskCliHandler implements CliCommandHandler {
                         case "--title" -> title = value;
                         case "--description" -> description = value;
                         case "--priority" -> priority = parsePriority(value);
-                        case "--estimate" -> {
-                            if (value.equalsIgnoreCase("none")) {
-                                estimate = null;
-                            } else {
-                                try {
-                                    estimate = Integer.valueOf(value);
-                                } catch (NumberFormatException e) {
-                                    throw new IllegalArgumentException("Invalid estimate: '" + value + "'. Expected whole minutes or none");
-                                }
-                            }
-                        }
+                        case "--estimate" -> estimate = parseEstimate(value);
                         case "--due" -> dueDate = value.equalsIgnoreCase("none") ? null : parseDate(value);
                         default -> throw new IllegalStateException("Unexpected option: " + option);
                     }
@@ -206,6 +219,17 @@ final class TaskCliHandler implements CliCommandHandler {
             throw new IllegalArgumentException("--exceeded expects a whole number of minutes, got '" + value + "'");
         }
     }
+    private Integer parseEstimate(String value) {
+        if (value.equalsIgnoreCase("none")) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(value);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid estimate: '" + value + "'. Expected whole minutes or none");
+        }
+    }
+
     private LocalDate parseDate(String val) {
         try {
             return LocalDate.parse(val.strip());
