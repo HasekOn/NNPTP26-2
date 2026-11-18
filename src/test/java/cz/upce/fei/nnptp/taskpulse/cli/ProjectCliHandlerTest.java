@@ -74,11 +74,11 @@ class ProjectCliHandlerTest {
     }
 
     @Test
-    void editCanReplaceNameAndClearDescription() {
+    void editCanReplaceNameAndKeepDescription() {
         var project = service.createProject("Old", "Old description");
         handler.handle(List.of("EDIT", project.getId().toString(), "New"));
         assertThat(service.getProject(project.getId()).getName()).isEqualTo("New");
-        assertThat(service.getProject(project.getId()).getDescription()).isEmpty();
+        assertThat(service.getProject(project.getId()).getDescription()).isEqualTo("Old description");
         assertThat(stdout.toString(StandardCharsets.UTF_8)).contains("Project updated:");
     }
 

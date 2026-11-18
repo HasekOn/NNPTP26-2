@@ -21,12 +21,19 @@ final class CliOptions {
     static CliOptions parse(List<String> args, int startIndex) {
         CliOptions options = new CliOptions();
         for (int i = startIndex; i < args.size(); i++) {
-            String name = args.get(i).toLowerCase(Locale.ROOT);
+            String argument = args.get(i);
+            int equalsIndex = argument.indexOf('=');
+            String name = (equalsIndex < 0 ? argument : argument.substring(0, equalsIndex))
+                    .toLowerCase(Locale.ROOT);
             if (!name.startsWith("--")) {
                 continue;
             }
 
-            if (FLAGS.contains(name)) {
+            if (equalsIndex >= 0) {
+                if (VALUE_OPTIONS.contains(name)) {
+                    options.values.put(name, argument.substring(equalsIndex + 1));
+                }
+            } else if (FLAGS.contains(name)) {
                 if (name.equals("--exceeded") && i + 1 < args.size()
                         && !args.get(i + 1).startsWith("--")) {
                     options.values.put(name, args.get(++i));

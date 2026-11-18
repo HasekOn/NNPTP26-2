@@ -2,6 +2,13 @@
 
 [![codecov](https://codecov.io/gh/rodi0878/NNPTP26-2/graph/badge.svg?token=7Y6B0HFZ1G)](https://codecov.io/gh/rodi0878/NNPTP26-2)
 
+## CLI option values
+
+For `task list` and `worklog log`, use `--option=value` when a value begins
+with `--`, for example `task list --search=--overdue` or
+`worklog log <task-id> 30 --author Dev --desc="--verbose details"`.
+The space-separated form still rejects another switch as a missing value.
+
 ## Workspace backup and restore (FEATURE-005)
 
 Use the following commands either interactively or as application arguments:

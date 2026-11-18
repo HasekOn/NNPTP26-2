@@ -81,7 +81,7 @@ class WorklogCliHandlerTest {
     @Test
     void descriptionStartingWithDoubleDashIsStoredAndListed() {
         handler.handle(List.of("log", taskId.toString(), "40", "--author", "Dev",
-                "--desc", "--verbose"));
+                "--desc=--verbose"));
         assertThat(tasks.getTask(taskId).getWorklogs().get(0).description()).isEqualTo("--verbose");
         stdout.reset();
         handler.handle(List.of("list", taskId.toString()));

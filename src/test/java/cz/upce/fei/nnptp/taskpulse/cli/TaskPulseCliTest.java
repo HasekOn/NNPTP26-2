@@ -312,6 +312,21 @@ class TaskPulseCliTest {
     }
 
     @Test
+    void equalsSyntaxAcceptsQuotedSwitchLikeValues() {
+        var project = projectService.createProject("Course", "");
+        Task task = taskService.createTask(project.getId(), "Fix --overdue flag", "", Priority.MEDIUM, null, null);
+        taskService.transitionTask(task.getId(), TaskState.IN_PROGRESS);
+
+        cli.executeLine("worklog log " + task.getId() + " 30 --author Dev --desc=\"--verbose details\"");
+        cli.executeLine("task list --search=\"--overdue flag\"");
+
+        assertThat(taskService.getTask(task.getId()).getWorklogs().get(0).description())
+                .isEqualTo("--verbose details");
+        assertThat(outContent.toString()).contains("Fix --overdue flag");
+        assertThat(errContent.toString()).isEmpty();
+    }
+
+    @Test
     void taskListWithoutSortOrdersByTitle() {
         UUID projectId = projectService.createProject("Course", "").getId();
         taskService.createTask(projectId, "Beta", "", Priority.LOW, null, null);
