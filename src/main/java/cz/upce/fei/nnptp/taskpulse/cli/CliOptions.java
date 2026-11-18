@@ -43,7 +43,7 @@ final class CliOptions {
                 } else {
                     options.values.put(name, "");
                 }
-            } else if (VALUE_OPTIONS.contains(name)) {
+            } else {
                 if (i + 1 >= args.size() || args.get(i + 1).startsWith("--")) {
                     throw new IllegalArgumentException("Missing value for option " + name);
                 }
