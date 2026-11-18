@@ -14,6 +14,7 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -132,11 +133,29 @@ public class CsvStorageManager {
     }
 
     private <T> void writeAll(CsvEntityMapper<T> mapper, Iterable<T> values) throws IOException {
-        Path path = dataDirectory.resolve(mapper.fileName());
-        try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
-            writeLine(writer, mapper.columns());
+        Path target = dataDirectory.resolve(mapper.fileName());
+        Path temporary = Files.createTempFile(
+                dataDirectory,
+                "csv-",
+                ".tmp");
+        try {
+            writeCsv(temporary, mapper, values);
+
+            Files.move(
+                    temporary,
+                    target,
+                    StandardCopyOption.ATOMIC_MOVE);
+        } finally {
+            Files.deleteIfExists(temporary);
+        }
+    }
+
+    private <T> void writeCsv(Path path, CsvEntityMapper<T> mapper, Iterable<T> values) throws IOException {
+        try (BufferedWriter bufferedWriter = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
+            writeLine(bufferedWriter, mapper.columns());
+
             for (T value : values) {
-                writeLine(writer, mapper.toFields(value));
+                writeLine(bufferedWriter, mapper.toFields(value));
             }
         }
     }
