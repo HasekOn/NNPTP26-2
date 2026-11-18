@@ -40,6 +40,23 @@ class CliOptionsTest {
         assertThat(options.has("--overdue")).isTrue();
     }
 
+    @ParameterizedTest
+    @MethodSource("valueOptions")
+    void acceptsSwitchLikeValueWithEquals(String option) {
+        CliOptions options = CliOptions.parse(List.of(option + "=--overdue=detail", "--overdue"), 0);
+
+        assertThat(options.get(option)).isEqualTo("--overdue=detail");
+        assertThat(options.has("--overdue")).isTrue();
+    }
+
+    @Test
+    void equalsSyntaxPreservesCaseAndAllowsEmptyValue() {
+        CliOptions options = CliOptions.parse(List.of("--SEARCH=MiXeD", "--desc="), 0);
+
+        assertThat(options.get("--search")).isEqualTo("MiXeD");
+        assertThat(options.get("--desc")).isEmpty();
+    }
+
     @Test
     void acceptsFlagsWithoutValuesBeforeAnotherSwitch() {
         CliOptions options = CliOptions.parse(List.of("--overdue", "--exceeded", "--state", "TODO"), 0);

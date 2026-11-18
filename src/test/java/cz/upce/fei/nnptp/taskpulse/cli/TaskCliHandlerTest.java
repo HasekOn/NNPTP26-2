@@ -46,7 +46,7 @@ class TaskCliHandlerTest {
         handler.handle(List.of("label", "add"));
         handler.handle(List.of("delete"));
         assertThat(stderr.toString(StandardCharsets.UTF_8))
-                .contains("Usage: task <add|list|show|transition|label|delete>",
+                .contains("Usage: task <add|update|list|show|transition|label|delete>",
                         "Usage: task add", "Usage: task show", "Usage: task transition",
                         "Usage: task label", "Usage: task delete");
     }
@@ -66,7 +66,7 @@ class TaskCliHandlerTest {
     void searchAcceptsLiteralStartingWithDoubleDash() {
         tasks.createTask(projectId, "Fix --overdue flag", "", Priority.HIGH, null, null);
         tasks.createTask(projectId, "Unrelated", "", Priority.MEDIUM, null, null);
-        handler.handle(List.of("list", "--search", "--overdue"));
+        handler.handle(List.of("list", "--search=--overdue"));
         assertThat(stdout.toString(StandardCharsets.UTF_8))
                 .contains("Fix --overdue flag")
                 .doesNotContain("Unrelated");
