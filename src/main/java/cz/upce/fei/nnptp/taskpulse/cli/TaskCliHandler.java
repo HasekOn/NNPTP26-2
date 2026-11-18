@@ -51,18 +51,11 @@ final class TaskCliHandler implements CliCommandHandler {
                 LocalDate dueDate = null;
                 for (; i < args.size(); i += 2) {
                     String option = args.get(i).toLowerCase(Locale.ROOT);
-                    if (!List.of("--priority", "--estimate", "--due").contains(option)) {
-                        throw new IllegalArgumentException("Unknown task add option: '" + args.get(i) + "'");
-                    }
-                    if (i + 1 >= args.size() || args.get(i + 1).startsWith("--")) {
-                        throw new IllegalArgumentException("Missing value for " + option);
-                    }
-                    String value = args.get(i + 1);
                     switch (option) {
-                        case "--priority" -> priority = parsePriority(value);
-                        case "--estimate" -> estimate = parseEstimate(value);
-                        case "--due" -> dueDate = parseDate(value);
-                        default -> throw new IllegalStateException("Unexpected option: " + option);
+                        case "--priority" -> priority = parsePriority(optionValue(args, i, option));
+                        case "--estimate" -> estimate = parseEstimate(optionValue(args, i, option));
+                        case "--due" -> dueDate = parseDate(optionValue(args, i, option));
+                        default -> throw new IllegalArgumentException("Unknown task add option: '" + args.get(i) + "'");
                     }
                 }
                 Task task = taskService.createTask(projectId, title, desc, priority, estimate, dueDate);
@@ -219,6 +212,13 @@ final class TaskCliHandler implements CliCommandHandler {
             throw new IllegalArgumentException("--exceeded expects a whole number of minutes, got '" + value + "'");
         }
     }
+    private static String optionValue(List<String> args, int optionIndex, String option) {
+        if (optionIndex + 1 >= args.size() || args.get(optionIndex + 1).startsWith("--")) {
+            throw new IllegalArgumentException("Missing value for " + option);
+        }
+        return args.get(optionIndex + 1);
+    }
+
     private Integer parseEstimate(String value) {
         if (value.equalsIgnoreCase("none")) {
             return null;
