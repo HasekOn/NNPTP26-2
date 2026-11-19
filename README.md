@@ -9,6 +9,15 @@ with `--`, for example `task list --search=--overdue` or
 `worklog log <task-id> 30 --author Dev --desc="--verbose details"`.
 The space-separated form still rejects another switch as a missing value.
 
+## Task creation options
+
+```text
+task add <project-id> <title> [description] [--priority <priority>] [--estimate <minutes>] [--due <YYYY-MM-DD>]
+```
+
+Defaults are `MEDIUM` priority, no estimate or due date.
+An invalid or unknown option is rejected and task is not created.
+
 ## Workspace backup and restore (FEATURE-005)
 
 Use the following commands either interactively or as application arguments:
