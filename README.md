@@ -8,6 +8,7 @@ For `task list` and `worklog log`, use `--option=value` when a value begins
 with `--`, for example `task list --search=--overdue` or
 `worklog log <task-id> 30 --author Dev --desc="--verbose details"`.
 The space-separated form still rejects another switch as a missing value.
+Unknown options and value options without a following value are rejected.
 
 ## Task creation options
 

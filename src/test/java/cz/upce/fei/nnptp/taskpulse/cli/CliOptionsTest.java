@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -12,6 +13,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 class CliOptionsTest {
+
+    @ParameterizedTest
+    @MethodSource("valueOptions")
+    void rejectsMissingTrailingValue(String option) {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> CliOptions.parse(List.of("list", option), 1))
+                .withMessage("Missing value for option " + option);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"--prioirty", "--prioirty=HIGH"})
+    void rejectsUnknownOptions(String option) {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> CliOptions.parse(List.of(option), 0))
+                .withMessage("Unknown option: --prioirty");
+    }
 
     static Stream<String> valueOptions() {
         return Stream.of("--project", "--state", "--priority", "--label", "--search",
